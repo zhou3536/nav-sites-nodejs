@@ -30,7 +30,10 @@ app.use(authMiddleware);
 app.use(bookmarksRouter);
 
 // 6. 前端静态页面与资源托管
-app.use(express.static(config.PUBLIC_DIR));
+app.use(express.static(config.PUBLIC_DIR, {
+  maxAge: '10m',
+  etag: true,
+}));
 
 // 7. 兜底路由
 app.get('*', (req, res) => {
@@ -41,7 +44,7 @@ app.get('*', (req, res) => {
 async function startServer() {
   try {
     await initStorage();
-    app.listen((config.HOST,config.PORT), () => {
+    app.listen((config.HOST, config.PORT), () => {
       console.log(`[Nav-Sites] Server is running on http://${config.HOST}:${config.PORT}`);
       console.log(`[Nav-Sites] Username: ${config.USERNAME}`);
     });

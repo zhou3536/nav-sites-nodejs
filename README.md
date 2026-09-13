@@ -79,6 +79,13 @@ npm start
 
 启动后在浏览器打开：`http://localhost:3000`
 
+#### 批量重新获取书签图标
+如果需要手动批量重新抓取所有书签的图标并更新 `data/bookmarks.json`，可随时运行：
+```bash
+npm run getico
+# 或直接运行：node getico.js
+```
+
 ---
 
 ### 2. Docker 部署
