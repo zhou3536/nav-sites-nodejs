@@ -1,0 +1,26 @@
+{
+  "name": "nav-sites-nodejs",
+  "version": "1.0.0",
+  "description": "Navigation site with Node.js backend",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node test-server.js"
+  },
+  "keywords": [
+    "nav",
+    "bookmark",
+    "nodejs",
+    "express"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}

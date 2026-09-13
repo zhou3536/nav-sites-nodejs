@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Link</title>
+  <link rel="stylesheet" href="sty.css">
+</head>
+
+<body>
+
+  <header>
+    <div class="search-wrap">
+      <div class="engine-pills">
+        <button class="pill active" data-engine="bing">Bing</button>
+        <button class="pill" data-engine="google">Google</button>
+        <button class="pill" data-engine="baidu">Baidu</button>
+      </div>
+      <div class="search-box">
+        <input id="search-input" type="text" placeholder="搜索…" autocomplete="off">
+        <ul id="suggestion-list" class="suggestion-list"></ul>
+        <button id="clean-btn">×</button>
+        <button id="search-btn">⌕</button>
+      </div>
+
+    </div>
+  </header>
+
+  <main>
+    <div id="bookmarks-grid"></div>
+  </main>
+
+  <!-- Context Menu -->
+  <div id="ctx-menu">
+    <div class="ctx-item" id="ctx-edit">编辑</div>
+    <div class="ctx-item danger" id="ctx-delete">删除</div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal-overlay">
+    <div id="modal">
+      <h2 id="modal-title">添加网站</h2>
+      <div class="field">
+        <label>名称</label>
+        <input id="modal-name" type="text">
+      </div>
+      <div class="field">
+        <label>网址</label>
+        <input id="modal-url" type="text">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="modal-cancel">取消</button>
+        <button class="btn btn-primary" id="modal-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <script>
+    let sh = JSON.parse(localStorage.getItem('sh_data') || '[]');
+    // ── Config ──
+    const ENGINES = {
+      bing: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
+      google: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+      baidu: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`,
+    };
+
+    const COLORS = [
+      '#6366f1', '#0ea5e9', '#10b981', '#f59e0b',
+      '#ec4899', '#8b5cf6', '#14b8a6', '#f97316',
+    ];
+
+    // ── State ──
+    let bookmarks = [];
+    let activeEngine = localStorage.getItem('engine') || 'bing';
+    let ctxTarget = null;   // bookmark id of right-clicked card
+    let editingId = null;   // null = add mode, string = edit mode
+    let dragSrcId = null;
+
+    // ── Local Cache Helper ──
+    const CACHE_KEY = 'bookmarks_cache';
+    function saveCache() {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(bookmarks));
+    }
+
+    // ── Search ──
+    document.querySelectorAll('.pill').forEach(btn => {
+      if (btn.dataset.engine === activeEngine) btn.classList.add('active');
+      else btn.classList.remove('active');
+
+      btn.addEventListener('click', () => {
+        activeEngine = btn.dataset.engine;
+        localStorage.setItem('engine', activeEngine);
+        document.querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    function doSearch() {
+      const q = document.getElementById('search-input').value.trim();
+      if (!q) return;
+      window.open(ENGINES[activeEngine](q), '_blank');
+      let index = sh.indexOf(q);
+      if (index !== -1) sh.splice(index, 1);
+      sh.push(q);
+      if (sh.length > 10) sh.shift();
+      localStorage.setItem('sh_data', JSON.stringify(sh));
+    }
+
+    document.getElementById('search-btn').addEventListener('click', doSearch);
+    document.getElementById('search-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doSearch();
+    });
+
+    // ── API ──
+    async function apiFetch(path, opts = {}) {
+      const r = await fetch(path, {
+        headers: { 'Content-Type': 'application/json' },
+        ...opts,
+      });
+      if (!r.ok) throw new Error(await r.text());
+      return r.json();
+    }
+
+    async function loadBookmarks() {
+      // 启动时优先读取本地缓存渲染网页，加速网页渲染
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (cachedData) {
+        try {
+          bookmarks = JSON.parse(cachedData);
+          render();
+        } catch (e) {
+          console.error('解析本地缓存失败', e);
+        }
+      }
+
+      try {
+        const apiPath = '/bookmarks';
+        const netData = await apiFetch(apiPath);
+        const netDataStr = JSON.stringify(netData);
+        if (netDataStr !== cachedData) {
+          bookmarks = netData;
+          saveCache();
+          render();
+        }
+      } catch (e) {
+        if (!cachedData) {
+          showToast('加载失败');
+        } else {
+          console.warn('网络数据获取失败，当前处于离线缓存模式', e);
+        }
+      }
+    }
+
+    function domainOf(url) {
+      try { return new URL(url).hostname.replace('www.', ''); }
+      catch { return url; }
+    }
+
+    function render() {
+      const grid = document.getElementById('bookmarks-grid');
+      grid.innerHTML = '';
+
+      bookmarks.forEach(bm => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.id = bm.id;
+        card.draggable = true;
+        card.innerHTML = `
+                  <div class="card-body">
+                    <img src="${bm.icon || 'favicon.ico'}"/>
+                    <div class="card-name">${esc(bm.name)}</div>
+                    <div class="card-url">${esc(domainOf(bm.url))}</div>
+                  </div>`;
+        // left click → open
+        card.addEventListener('click', () => window.open(bm.url, '_blank'));
+
+        // right click → context menu
+        card.addEventListener('contextmenu', e => {
+          e.preventDefault();
+          ctxTarget = bm.id;
+          showCtx(e.clientX, e.clientY);
+        });
+
+        card.addEventListener('dragstart', e => {
+          dragSrcId = bm.id;
+          setTimeout(() => card.classList.add('dragging'), 0);
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        card.addEventListener('dragend', () => card.classList.remove('dragging'));
+        card.addEventListener('dragover', e => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          document.querySelectorAll('.card').forEach(c => c.classList.remove('drag-over'));
+          card.classList.add('drag-over');
+        });
+        card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+        card.addEventListener('drop', async e => {
+          e.preventDefault();
+          card.classList.remove('drag-over');
+          if (dragSrcId === bm.id) return;
+          const srcIdx = bookmarks.findIndex(b => b.id === dragSrcId);
+          const dstIdx = bookmarks.findIndex(b => b.id === bm.id);
+          const reordered = [...bookmarks];
+          const [moved] = reordered.splice(srcIdx, 1);
+          reordered.splice(dstIdx, 0, moved);
+          const bookmarks_bk = [...bookmarks]
+          bookmarks = reordered;
+          render();
+          try {
+            await apiFetch('/bookmarks', { method: 'PUT', body: JSON.stringify(bookmarks) });
+            saveCache(); // 同步本地缓存
+          } catch {
+            showToast('排序保存失败');
+            bookmarks = [...bookmarks_bk];
+            render();
+          }
+        });
+
+        grid.appendChild(card);
+      });
+      const card2 = document.createElement('div');
+      card2.className = 'card card2';
+      card2.innerHTML = ``;
+      card2.addEventListener('click', addNewBM);
+      grid.appendChild(card2);
+    }
+
+    function esc(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ── Context Menu ──
+    const ctxMenu = document.getElementById('ctx-menu');
+
+    function showCtx(x, y) {
+      ctxMenu.style.display = 'block';
+      // keep inside viewport
+      const mw = ctxMenu.offsetWidth || 140;
+      const mh = ctxMenu.offsetHeight || 90;
+      ctxMenu.style.left = Math.min(x, window.innerWidth - mw - 8) + 'px';
+      ctxMenu.style.top = Math.min(y, window.innerHeight - mh - 8) + 'px';
+    }
+
+    function hideCtx() {
+      ctxMenu.style.display = 'none';
+      ctxTarget = null;
+    }
+
+    document.addEventListener('click', hideCtx);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { hideCtx(); closeModal(); } });
+
+    document.getElementById('ctx-edit').addEventListener('click', () => {
+      if (!ctxTarget) return;
+      const bm = bookmarks.find(b => b.id === ctxTarget);
+      if (!bm) return;
+      editingId = bm.id;
+      document.getElementById('modal-title').textContent = '编辑网站';
+      document.getElementById('modal-name').value = bm.name;
+      document.getElementById('modal-url').value = bm.url;
+      openModal();
+    });
+
+    document.getElementById('ctx-delete').addEventListener('click', async () => {
+      if (!ctxTarget) return;
+      const id = ctxTarget;
+      const bm = bookmarks.find(b => b.id === ctxTarget);
+      const confirm_1 = confirm('确认删除' + bm.name)
+      if (!confirm_1) return;
+      hideCtx();
+      try {
+        await apiFetch(`/bookmarks?id=${id}`, { method: 'DELETE' });
+        bookmarks = bookmarks.filter(b => b.id !== id);
+        saveCache(); // 同步本地缓存
+        render();
+        showToast('已删除');
+      } catch { showToast('删除失败'); }
+    });
+
+    // ── Add button ──
+    function addNewBM() {
+      editingId = null;
+      document.getElementById('modal-title').textContent = '添加网站';
+      document.getElementById('modal-name').value = '';
+      document.getElementById('modal-url').value = '';
+      openModal();
+    };
+
+    // ── Modal ──
+    const modal_overlay = document.getElementById('modal-overlay');
+    function openModal() {
+      modal_overlay.classList.add('show');
+      setTimeout(() => document.getElementById('modal-name').focus(), 50);
+    }
+
+    function closeModal() {
+      modal_overlay.classList.remove('show');
+      editingId = null;
+    }
+
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+
+    const save_btn = document.getElementById('modal-save')
+    save_btn.addEventListener('click', async () => {
+      let name = document.getElementById('modal-name').value.trim();
+      let url = document.getElementById('modal-url').value.trim();
+
+      if (!name || !url) { showToast('请填写名称和网址'); return; }
+
+      // auto-add https
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      save_btn.disabled = true;
+      try {
+        if (editingId) {
+          const updated = await apiFetch('/bookmarks', {
+            method: 'PUT',
+            body: JSON.stringify({ id: editingId, name, url }),
+          });
+          const idx = bookmarks.findIndex(b => b.id === editingId);
+          if (idx !== -1) bookmarks[idx] = updated;
+          showToast('已更新');
+        } else {
+          const created = await apiFetch('/bookmarks', {
+            method: 'POST',
+            body: JSON.stringify({ name, url }),
+          });
+          bookmarks.push(created);
+          showToast('已添加');
+        }
+        saveCache(); // 修改数据上传网络成功后同步本地数据
+        render();
+        closeModal();
+      } catch {
+        showToast('保存失败');
+      } finally {
+        save_btn.disabled = false;
+      }
+    });
+
+    // Enter in modal inputs
+    ['modal-name', 'modal-url'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('modal-save').click();
+      });
+    });
+
+    // ── Toast ──
+    let toastTimer;
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    // ── Search Suggestions ──
+    const searchInput = document.getElementById('search-input');
+    const sugList = document.getElementById('suggestion-list');
+    let currentSugIndex = -1;
+    const cleanbtn = document.getElementById('clean-btn');
+    function getSuggestions(query) {
+      if (!query) {
+        hideSuggestions();
+        cleanbtn.style.display = 'none';
+        return
+      };
+      cleanbtn.style.display = 'block'
+      const script = document.createElement('script');
+      script.src = `https://suggestion.baidu.com/su?wd=${encodeURIComponent(query)}&cb=window.baiduCallback`;
+      document.body.appendChild(script);
+      document.body.removeChild(script);
+    }
+
+    // 2. JSONP 回调函数
+    window.baiduCallback = function (data) {
+      const suggestions = data.s;
+      if (suggestions.length > 0) {
+        renderSuggestions(suggestions);
+      } else {
+        hideSuggestions();
+      }
+    };
+
+    // 3. 渲染列表
+    function renderSuggestions(list, b) {
+      if (list.length === 0) return;
+      sugList.innerHTML = '';
+      list.slice(0, 10).forEach((item, index) => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        li.addEventListener('click', () => {
+          searchInput.value = item;
+          doSearch();
+          hideSuggestions();
+        });
+        if (b) {
+          const del = document.createElement('div');
+          del.classList = 'delsh';
+          del.textContent = '×';
+          del.addEventListener('click', (e) => {
+            e.stopPropagation();
+            li.remove();
+            let index = sh.indexOf(item);
+            if (index !== -1) sh.splice(index, 1);
+            if (sh.length === 0) hideSuggestions();
+            localStorage.setItem('sh_data', JSON.stringify(sh));
+          })
+          li.appendChild(del);
+        }
+        sugList.appendChild(li);
+      });
+      sugList.style.display = 'block';
+      currentSugIndex = -1;
+    }
+
+    function hideSuggestions() {
+      sugList.style.display = 'none';
+      sugList.innerHTML = '';
+    }
+
+    // 4. 防抖处理
+    function debounce(fn, delay) {
+      let timer;
+      return function () {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, arguments), delay);
+      }
+    }
+
+    // 5. 事件监听
+    searchInput.addEventListener('input', debounce((e) => {
+      getSuggestions(e.target.value.trim());
+    }, 300));
+    searchInput.addEventListener('click', (e) => {
+      let q = e.target.value.trim()
+      if (q) {
+        getSuggestions(q);
+      } else {
+        renderSuggestions(sh.toReversed(), true)
+      }
+
+    });
+    cleanbtn.addEventListener('click', (e) => {
+      searchInput.value = '';
+      getSuggestions();
+      renderSuggestions(sh.toReversed(), true)
+    });
+
+    // 6. 键盘导航
+    searchInput.addEventListener('keydown', (e) => {
+      const items = sugList.querySelectorAll('li');
+      if (sugList.style.display === 'block' && items.length > 0) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          currentSugIndex = (currentSugIndex + 1) % items.length;
+          updateActiveStep(items);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          currentSugIndex = (currentSugIndex - 1 + items.length) % items.length;
+          updateActiveStep(items);
+        }
+      }
+    });
+
+    function updateActiveStep(items) {
+      items.forEach((item, index) => {
+        if (index === currentSugIndex) {
+          item.classList.add('active');
+          searchInput.value = item.textContent;
+        } else {
+          item.classList.remove('active');
+        }
+      });
+    }
+
+    // 点击空白处关闭
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search-box')) {
+        hideSuggestions();
+      }
+    });
+
+    loadBookmarks();
+
+  </script>
+</body>
+
+</html>
