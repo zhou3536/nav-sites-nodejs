@@ -18,7 +18,7 @@
 
 ```text
 nav-sites-nodejs/
-├── data/                     # 数据持久化目录（自动生成）
+├── data/                     # 数据持久化目录
 │   ├── bookmarks.json        # 书签数据
 │   └── ico/                  # 抓取到的网站图标
 ├── public/                   # 前端静态资源
