@@ -43,11 +43,11 @@
       <h2 id="modal-title">添加网站</h2>
       <div class="field">
         <label>名称</label>
-        <input id="modal-name" type="text">
+        <input id="modal-name" type="text" placeholder="输入名称">
       </div>
       <div class="field">
         <label>网址</label>
-        <input id="modal-url" type="text">
+        <input id="modal-url" type="text" placeholder="输入网址">
       </div>
       <div class="modal-actions">
         <button class="btn btn-ghost" id="modal-cancel">取消</button>
@@ -285,7 +285,7 @@
       editingId = null;
       document.getElementById('modal-title').textContent = '添加网站';
       document.getElementById('modal-name').value = '';
-      document.getElementById('modal-url').value = '';
+      document.getElementById('modal-url').value = 'https://';
       openModal();
     };
 
