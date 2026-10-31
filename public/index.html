@@ -117,6 +117,7 @@
 
     // ── API ──
     async function apiFetch(path, opts = {}) {
+      opts.body = JSON.stringify(opts.body);
       const r = await fetch(path, {
         headers: { 'Content-Type': 'application/json' },
         ...opts,
@@ -211,7 +212,8 @@
           bookmarks = reordered;
           render();
           try {
-            await apiFetch('/bookmarks', { method: 'PUT', body: JSON.stringify(bookmarks) });
+            const o = bookmarks.map(item => ({ id: item.id }));
+            await apiFetch('/bookmarks', { method: 'PUT', body: { o } });
             saveCache(); // 同步本地缓存
           } catch {
             showToast('排序保存失败');
@@ -272,7 +274,7 @@
       if (!confirm_1) return;
       hideCtx();
       try {
-        await apiFetch(`/bookmarks?id=${id}`, { method: 'DELETE' });
+        await apiFetch('/del_bookmark', { method: 'POST', body: { id } });
         bookmarks = bookmarks.filter(b => b.id !== id);
         saveCache(); // 同步本地缓存
         render();
@@ -315,17 +317,17 @@
       save_btn.disabled = true;
       try {
         if (editingId) {
-          const updated = await apiFetch('/bookmarks', {
-            method: 'PUT',
-            body: JSON.stringify({ id: editingId, name, url }),
+          const updated = await apiFetch('/edt_bookmark', {
+            method: 'POST',
+            body: { id: editingId, name, url },
           });
           const idx = bookmarks.findIndex(b => b.id === editingId);
           if (idx !== -1) bookmarks[idx] = updated;
           showToast('已更新');
         } else {
-          const created = await apiFetch('/bookmarks', {
+          const created = await apiFetch('/add_bookmark', {
             method: 'POST',
-            body: JSON.stringify({ name, url }),
+            body: { name, url },
           });
           bookmarks.push(created);
           showToast('已添加');

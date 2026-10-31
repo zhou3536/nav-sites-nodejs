@@ -1,9 +1,11 @@
-*,
-*::before,
-*::after {
+* {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
 }
 
 :root {
@@ -113,7 +115,7 @@ header {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
-    
+
 }
 
 
@@ -388,22 +390,22 @@ main {
 
 @media (max-width: 500px) {
     header {
-        padding: 50px 15px 30px;
+        padding: 40px 10px 30px;
     }
 
     main {
-        padding: 5px 5px 60px;
+        padding: 10px 10px 60px;
     }
 
     #bookmarks-grid {
-        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-        gap: 5px;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
     }
 
     .card {
         border: none;
-        min-height: 34px;
-        border-radius: 0;
+        min-height: 48px;
+        /* border-radius: 0; */
     }
 
     .card:hover {
@@ -412,13 +414,8 @@ main {
     }
 
     .card-body {
-        padding: 8px 2px;
-        gap: 2px;
-    }
-
-    .card-body>img {
-        width: 16px;
-        height: 16px;
+        padding: 12px;
+        gap: 5px;
     }
 
     .card-name {
@@ -463,6 +460,6 @@ main {
     background-color: #f5f5f5;
 }
 
-.delsh{
+.delsh {
     padding: 0 6px;
 }

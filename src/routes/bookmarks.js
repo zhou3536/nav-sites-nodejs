@@ -16,7 +16,7 @@ router.get('/bookmarks', async (req, res) => {
 });
 
 // POST /bookmarks - 添加书签
-router.post('/bookmarks', async (req, res) => {
+router.post('/add_bookmark', async (req, res) => {
   try {
     const { name, url } = req.body || {};
     if (!name || !url) {
@@ -44,26 +44,32 @@ router.post('/bookmarks', async (req, res) => {
 // PUT /bookmarks - 重排序 (array) 或 编辑单项 ({id, name, url})
 router.put('/bookmarks', async (req, res) => {
   try {
-    const body = req.body;
     const bookmarks = await getBookmarks();
+    const { o } = req.body;
 
-    // 批量重排序：body 为数组
-    if (Array.isArray(body)) {
-      if (bookmarks.length !== body.length) {
-        return res.status(400).json({ error: 'data error' });
-      }
-      const s1 = bookmarks.map(obj => JSON.stringify(obj)).sort().join();
-      const s2 = body.map(obj => JSON.stringify(obj)).sort().join();
-      if (s1 !== s2) {
-        return res.status(400).json({ error: 'data error' });
-      }
-
-      await saveBookmarks(body);
-      return res.json({ ok: true });
+    if (!o || bookmarks.length !== o.length) {
+      return res.status(400).json({ error: 'data error' });
     }
 
-    // 编辑单项书签
-    const { id, name, url } = body || {};
+    const orderMap = new Map(o.map((item, index) => [item.id, index]));
+    bookmarks.sort((a, b) => {
+      const indexA = orderMap.has(a.id) ? orderMap.get(a.id) : Infinity;
+      const indexB = orderMap.has(b.id) ? orderMap.get(b.id) : Infinity;
+      return indexA - indexB;
+    });
+    await saveBookmarks(bookmarks);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Error updating bookmark:', err);
+    res.status(500).json({ error: 'internal server error' });
+  }
+});
+
+
+router.post('/edt_bookmark', async (req, res) => {
+  try {
+    const bookmarks = await getBookmarks();
+    const { id, name, url } = req.body;
     if (!id || !name || !url) {
       return res.status(400).json({ error: 'id, name and url required' });
     }
@@ -88,10 +94,11 @@ router.put('/bookmarks', async (req, res) => {
   }
 });
 
+
 // DELETE /bookmarks?id=xxx - 删除书签
-router.delete('/bookmarks', async (req, res) => {
+router.post('/del_bookmark', async (req, res) => {
   try {
-    const id = req.query.id;
+    const { id } = req.body;
     if (!id) {
       return res.status(400).json({ error: 'id required' });
     }
