@@ -8,6 +8,7 @@ const router = express.Router();
 router.get('/bookmarks', async (req, res) => {
   try {
     const bookmarks = await getBookmarks();
+    res.setHeader('Cache-Control', 'no-store');
     res.json(bookmarks);
   } catch (err) {
     console.error('Error fetching bookmarks:', err);

@@ -155,6 +155,12 @@ main {
     min-height: 46px;
 }
 
+@media (pointer: fine) {
+    .card:hover {
+        border-color: #6da2ce;
+    }
+}
+
 .card2 {
     background-image:
         linear-gradient(#666, #666),
@@ -162,11 +168,6 @@ main {
     background-size: 20px 2px, 2px 20px;
     background-position: center;
     background-repeat: no-repeat;
-}
-
-.card:hover {
-    border-color: #6da2ce;
-    /* background-color: #d3f2ff; */
 }
 
 .card.dragging {
