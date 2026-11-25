@@ -303,7 +303,6 @@ main {
 .field label {
     display: block;
     font-size: 0.8rem;
-    font-weight: 600;
     color: var(--muted);
     margin-bottom: 6px;
     text-transform: uppercase;
@@ -486,8 +485,8 @@ main {
 }
 
 .checkbox-label input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     padding: 0;
     margin: 0;
     accent-color: var(--accent);
