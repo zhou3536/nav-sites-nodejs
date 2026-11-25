@@ -16,33 +16,7 @@ router.get('/bookmarks', async (req, res) => {
   }
 });
 
-// POST /bookmarks - 添加书签
-router.post('/add_bookmark', async (req, res) => {
-  try {
-    const { name, url } = req.body || {};
-    if (!name || !url) {
-      return res.status(400).json({ error: 'name and url required' });
-    }
-
-    const bookmarks = await getBookmarks();
-    const newBookmark = {
-      id: Date.now().toString(),
-      name: name.trim(),
-      url: url.trim(),
-    };
-
-    newBookmark.icon = await getIcon(newBookmark);
-    bookmarks.push(newBookmark);
-    await saveBookmarks(bookmarks);
-
-    return res.status(201).json(newBookmark);
-  } catch (err) {
-    console.error('Error adding bookmark:', err);
-    res.status(500).json({ error: 'internal server error' });
-  }
-});
-
-// PUT /bookmarks - 重排序 (array) 或 编辑单项 ({id, name, url})
+// PUT /bookmarks - 重排序
 router.put('/bookmarks', async (req, res) => {
   try {
     const bookmarks = await getBookmarks();
@@ -67,28 +41,37 @@ router.put('/bookmarks', async (req, res) => {
 });
 
 
-router.post('/edt_bookmark', async (req, res) => {
+router.post('/bookmark', async (req, res) => {
   try {
     const bookmarks = await getBookmarks();
     const { id, name, url } = req.body;
-    if (!id || !name || !url) {
-      return res.status(400).json({ error: 'id, name and url required' });
+    if (!name || !url) {
+      return res.status(400).json({ error: 'name and url required' });
     }
 
-    const idx = bookmarks.findIndex(b => b.id === id);
-    if (idx === -1) {
-      return res.status(404).json({ error: 'not found' });
+    let i;
+    if (id) {
+      i = bookmarks.findIndex(b => b.id === id);
+      if (i === -1) return res.status(404).json({ error: 'not found' });
+      bookmarks[i].name = name.trim();
+    } else {
+      i = newBookmark.length;
+      const newBookmark = {
+        id: Date.now().toString(),
+        name: name.trim(),
+      };
+      bookmarks.push(newBookmark);
     }
 
-    bookmarks[idx].name = name.trim();
-    if (bookmarks[idx].url !== url.trim()) {
-      await deleteIconsByPrefix(id);
-      bookmarks[idx].url = url.trim();
-      bookmarks[idx].icon = await getIcon(bookmarks[idx]);
+    if (bookmarks[i].url !== url) {
+      bookmarks[i].url === url;
+      if(id) await deleteIconsByPrefix(id);
+      bookmarks[i].icon = await getIcon(bookmarks[i]);
     }
 
     await saveBookmarks(bookmarks);
-    return res.json(bookmarks[idx]);
+    return res.json(bookmarks);
+    
   } catch (err) {
     console.error('Error updating bookmark:', err);
     res.status(500).json({ error: 'internal server error' });
@@ -96,7 +79,7 @@ router.post('/edt_bookmark', async (req, res) => {
 });
 
 
-// DELETE /bookmarks?id=xxx - 删除书签
+// DELETE 删除书签
 router.post('/del_bookmark', async (req, res) => {
   try {
     const { id } = req.body;

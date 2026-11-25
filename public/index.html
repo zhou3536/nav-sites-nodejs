@@ -214,7 +214,7 @@
           try {
             const o = bookmarks.map(item => ({ id: item.id }));
             await apiFetch('/bookmarks', { method: 'PUT', body: { o } });
-            saveCache(); // 同步本地缓存
+            saveCache();
           } catch {
             showToast('排序保存失败');
             bookmarks = [...bookmarks_bk];
@@ -226,7 +226,6 @@
       });
       const card2 = document.createElement('div');
       card2.className = 'card card2';
-      card2.innerHTML = ``;
       card2.addEventListener('click', addNewBM);
       grid.appendChild(card2);
     }
@@ -316,23 +315,14 @@
       if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
       save_btn.disabled = true;
       try {
-        if (editingId) {
-          const updated = await apiFetch('/edt_bookmark', {
-            method: 'POST',
-            body: { id: editingId, name, url },
-          });
-          const idx = bookmarks.findIndex(b => b.id === editingId);
-          if (idx !== -1) bookmarks[idx] = updated;
-          showToast('已更新');
-        } else {
-          const created = await apiFetch('/add_bookmark', {
-            method: 'POST',
-            body: { name, url },
-          });
-          bookmarks.push(created);
-          showToast('已添加');
-        }
-        saveCache(); // 修改数据上传网络成功后同步本地数据
+        const res = await apiFetch('/bookmark', {
+          method: 'POST',
+          body: { id: editingId || '', name, url },
+        });
+        bookmarks = res;
+ 
+        showToast('已更新');
+        saveCache();
         render();
         closeModal();
       } catch {

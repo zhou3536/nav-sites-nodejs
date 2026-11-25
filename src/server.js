@@ -3,8 +3,7 @@ import cookieParser from 'cookie-parser';
 import path from 'node:path';
 import config from './config.js';
 import { initStorage, ICO_DIR } from './services/storage.js';
-import { authMiddleware } from './middleware/auth.js';
-import authRouter from './routes/auth.js';
+import { initializeAuth } from './auth.js';
 import bookmarksRouter from './routes/bookmarks.js';
 
 const app = express();
@@ -12,7 +11,7 @@ const app = express();
 // 1. 基础中间件
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+// app.use(cookieParser());
 
 // 2. 静态图标服务（对应原 Cloudflare R2 /ico/*）
 app.use('/ico', express.static(ICO_DIR, {
@@ -21,10 +20,7 @@ app.use('/ico', express.static(ICO_DIR, {
 }));
 
 // 3. 认证路由（放行 /login, /logout）
-app.use(authRouter);
-
-// 4. 全局认证拦截中间件
-app.use(authMiddleware);
+initializeAuth(app);
 
 // 5. 业务 API 路由
 app.use(bookmarksRouter);
@@ -46,7 +42,6 @@ async function startServer() {
     await initStorage();
     app.listen((config.HOST, config.PORT), () => {
       console.log(`[Nav-Sites] Server is running on http://${config.HOST}:${config.PORT}`);
-      console.log(`[Nav-Sites] Username: ${config.USERNAME}`);
     });
   } catch (err) {
     console.error('[Nav-Sites] Failed to start server:', err);

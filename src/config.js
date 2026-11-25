@@ -11,10 +11,6 @@ const rootDir = path.resolve(__dirname, '..');
 const config = {
   PORT: parseInt(process.env.PORT || '3000', 10),
   HOST: process.env.HOST,
-  USERNAME: process.env.USERNAME,
-  PASSWORD: process.env.PASSWORD,
-  COOKIE_NAME: 'auth_token',
-  COOKIE_DAYS: 7,
   DATA_DIR: path.resolve(rootDir, process.env.DATA_DIR || './data'),
   PUBLIC_DIR: path.resolve(rootDir, 'public'),
 };

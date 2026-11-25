@@ -107,11 +107,10 @@
         body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
-
-      if (data.success && window.location.pathname === '/login') {
-        window.location.href = "/";
-      } else if (data.success) {
-        location.reload();
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromPath = urlParams.get('from');
+      if (res.ok) {
+        window.location.href = fromPath || '/';
       } else {
         document.getElementById("error").textContent = data.message;
       }
