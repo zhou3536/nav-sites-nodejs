@@ -49,6 +49,28 @@
         <label>网址</label>
         <input id="modal-url" type="text" placeholder="输入网址">
       </div>
+      <div class="field field-checkbox">
+        <label class="checkbox-label" for="uploadIcon">
+          <input id="uploadIcon" type="checkbox" checked>
+          <span>上传图标</span>
+        </label>
+      </div>
+      <div id="manual-icon-section" class="manual-icon-section">
+        <div class="icon-upload-bar">
+          <input id="modal-icon-file" type="file" accept="image/*" hidden>
+          <button type="button" class="btn btn-ghost btn-sm" id="modal-icon-pick">选择图片</button>
+          <!-- <span class="icon-size-hint">固定输出 128 × 128</span> -->
+        </div>
+        <div id="cropper-workspace" class="cropper-workspace">
+          <div class="cropper-stage">
+            <img id="cropper-img" alt="待裁剪图标">
+          </div>
+          <div class="cropper-preview-wrap">
+            <div id="cropper-preview" class="cropper-preview"></div>
+            <span class="preview-label">128 × 128 预览</span>
+          </div>
+        </div>
+      </div>
       <div class="modal-actions">
         <button class="btn btn-ghost" id="modal-cancel">取消</button>
         <button class="btn btn-primary" id="modal-save">保存</button>
@@ -59,6 +81,8 @@
   <!-- Toast -->
   <div id="toast"></div>
 
+  <script src="cropper.js"></script>
+  <script src="loader.js"></script>
   <script>
     let sh = JSON.parse(localStorage.getItem('sh_data') || '[]');
     // ── Config ──
@@ -117,11 +141,13 @@
 
     // ── API ──
     async function apiFetch(path, opts = {}) {
+      window.addLoader(document.body);
       opts.body = JSON.stringify(opts.body);
       const r = await fetch(path, {
         headers: { 'Content-Type': 'application/json' },
         ...opts,
       });
+      window.removeLoader(document.body);
       if (!r.ok) throw new Error(await r.text());
       return r.json();
     }
@@ -134,6 +160,7 @@
           bookmarks = JSON.parse(cachedData);
           render();
         } catch (e) {
+          bookmarks = [];
           console.error('解析本地缓存失败', e);
         }
       }
@@ -231,6 +258,7 @@
     }
 
     function esc(s) {
+      if (!s) return '';
       return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
@@ -292,13 +320,92 @@
 
     // ── Modal ──
     const modal_overlay = document.getElementById('modal-overlay');
+    const uploadIcon = document.getElementById('uploadIcon');
+    const manualIconSection = document.getElementById('manual-icon-section');
+    const iconFileInput = document.getElementById('modal-icon-file');
+    const iconPickBtn = document.getElementById('modal-icon-pick');
+    const cropperWorkspace = document.getElementById('cropper-workspace');
+    const cropperImg = document.getElementById('cropper-img');
+    const cropperPreview = document.getElementById('cropper-preview');
+    let cropperInstance = null;
+    let iconObjectUrl = null;
+
+    function destroyCropper() {
+      if (cropperInstance) {
+        cropperInstance.destroy();
+        cropperInstance = null;
+      }
+      if (iconObjectUrl) {
+        URL.revokeObjectURL(iconObjectUrl);
+        iconObjectUrl = null;
+      }
+      cropperImg.removeAttribute('src');
+      cropperPreview.innerHTML = '';
+      cropperWorkspace.classList.remove('active');
+    }
+
+    function resetIconUploader() {
+      uploadIcon.checked = false;
+      manualIconSection.classList.remove('open');
+      iconFileInput.value = '';
+      destroyCropper();
+    }
+
+    uploadIcon.addEventListener('change', () => {
+      if (uploadIcon.checked) {
+        manualIconSection.classList.add('open');
+      } else {
+        manualIconSection.classList.remove('open');
+      }
+    });
+
+    iconPickBtn.addEventListener('click', () => {
+      iconFileInput.value = '';
+      iconFileInput.click();
+    });
+
+    iconFileInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        showToast('请选择图片文件');
+        iconFileInput.value = '';
+        return;
+      }
+
+      destroyCropper();
+      iconObjectUrl = URL.createObjectURL(file);
+      cropperWorkspace.classList.add('active');
+      cropperImg.onload = () => {
+        cropperImg.onload = null;
+        cropperInstance = new Cropper(cropperImg, {
+          aspectRatio: 1,
+          viewMode: 1,
+          dragMode: 'move',
+          autoCropArea: 0.9,
+          minContainerWidth: 120,
+          minContainerHeight: 120,
+          preview: '#cropper-preview',
+          guides: true,
+          center: true,
+          highlight: true,
+          background: true,
+          cropBoxMovable: true,
+          cropBoxResizable: true,
+        });
+      };
+      cropperImg.src = iconObjectUrl;
+    });
+
     function openModal() {
+      resetIconUploader();
       modal_overlay.classList.add('show');
       setTimeout(() => document.getElementById('modal-name').focus(), 50);
     }
 
     function closeModal() {
       modal_overlay.classList.remove('show');
+      resetIconUploader();
       editingId = null;
     }
 
@@ -310,22 +417,43 @@
       let url = document.getElementById('modal-url').value.trim();
 
       if (!name || !url) { showToast('请填写名称和网址'); return; }
+      console.log('save1')
+      let icon = '';
+      if (uploadIcon.checked) {
+        if (!cropperInstance) {
+          showToast('请选择并裁剪图标图片');
+          return;
+        }
+        const canvas = cropperInstance.getCroppedCanvas({
+          width: 128,
+          height: 128,
+          imageSmoothingEnabled: true,
+          imageSmoothingQuality: 'high',
+        });
+        if (!canvas) {
+          showToast('图标裁剪失败');
+          return;
+        }
+        icon = canvas.toDataURL('image/png');
+      }
 
       // auto-add https
       if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
       save_btn.disabled = true;
       try {
+        const body = { id: editingId || '', name, url, icon };
         const res = await apiFetch('/bookmark', {
           method: 'POST',
-          body: { id: editingId || '', name, url },
+          body,
         });
         bookmarks = res;
- 
+
         showToast('已更新');
         saveCache();
         render();
         closeModal();
-      } catch {
+      } catch (e) {
+        console.log(e)
         showToast('保存失败');
       } finally {
         save_btn.disabled = false;
@@ -479,6 +607,7 @@
     loadBookmarks();
 
   </script>
+
 </body>
 
 </html>

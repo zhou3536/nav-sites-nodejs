@@ -1,23 +1,17 @@
 
-import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 dotenv.config({ override: true });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const SESSION_COOKIE_NAME = 'auth';
-const SESSION_DURATION_MS = 480 * 3600000; 
 
-
-
-const { COOKIE_SECRET, USERNAME, PASSWORD } = process.env;
+const { COOKIE_SECRET, USERNAME, PASSWORD, SESSION_DURATION_DAY = 1 } = process.env;
 if (!COOKIE_SECRET || !USERNAME || !PASSWORD) {
     console.log('请在.env文件设置 COOKIE_SECRET | USERNAME | PASSWORD ');
     process.exit(1);
 }
+const SESSION_DURATION_MS = SESSION_DURATION_DAY * 24 * 3600000;
 console.log('.env', USERNAME, PASSWORD);
 
 const setSessionCookie = (res) => {

@@ -1,6 +1,6 @@
 import express from 'express';
 import { getBookmarks, saveBookmarks, deleteIconsByPrefix } from '../services/storage.js';
-import { getIcon } from '../services/favicon.js';
+import { getIcon, saveIcon } from '../services/favicon.js';
 
 const router = express.Router();
 
@@ -44,7 +44,7 @@ router.put('/bookmarks', async (req, res) => {
 router.post('/bookmark', async (req, res) => {
   try {
     const bookmarks = await getBookmarks();
-    const { id, name, url } = req.body;
+    const { id, name, url, icon } = req.body;
     if (!name || !url) {
       return res.status(400).json({ error: 'name and url required' });
     }
@@ -55,23 +55,26 @@ router.post('/bookmark', async (req, res) => {
       if (i === -1) return res.status(404).json({ error: 'not found' });
       bookmarks[i].name = name.trim();
     } else {
-      i = newBookmark.length;
+      i = bookmarks.length;
       const newBookmark = {
         id: Date.now().toString(),
         name: name.trim(),
       };
       bookmarks.push(newBookmark);
     }
-
-    if (bookmarks[i].url !== url) {
-      bookmarks[i].url === url;
-      if(id) await deleteIconsByPrefix(id);
+    if (icon) {
+      bookmarks[i].url = url.trim();
+      if (id) await deleteIconsByPrefix(id);
+      bookmarks[i].icon = await saveIcon(icon,bookmarks[i].id);
+    } else if (bookmarks[i].url !== url) {
+      bookmarks[i].url = url.trim();
+      if (id) await deleteIconsByPrefix(id);
       bookmarks[i].icon = await getIcon(bookmarks[i]);
     }
 
     await saveBookmarks(bookmarks);
     return res.json(bookmarks);
-    
+
   } catch (err) {
     console.error('Error updating bookmark:', err);
     res.status(500).json({ error: 'internal server error' });

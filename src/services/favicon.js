@@ -20,6 +20,23 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 6000) {
   }
 }
 
+
+
+//保存到本地 ico 目录
+
+export async function saveIcon(base64, id) {
+  const randomStr = Math.random().toString(36).substring(2, 6);
+  const fileName = `${id}${randomStr}.png`;
+  const filePath = path.join(ICO_DIR, fileName);
+
+  const base64Data = base64.replace(/^data:image\/\w+;base64,/, '');
+
+  await fs.mkdir(ICO_DIR, { recursive: true });
+
+  await fs.writeFile(filePath, Buffer.from(base64Data, 'base64'));
+  return `ico/${fileName}`;
+}
+
 /**
  * 抓取目标网站的 Favicon 并持久化保存到本地 ico 目录
  * @param {{ id: string, url: string }} bookmark
@@ -135,6 +152,7 @@ export async function getIcon(bookmark) {
     const filePath = path.join(ICO_DIR, fileName);
 
     const arrayBuffer = await iconResponse.arrayBuffer();
+    await fs.mkdir(ICO_DIR, { recursive: true });
     await fs.writeFile(filePath, Buffer.from(arrayBuffer));
 
     return `ico/${fileName}`;
