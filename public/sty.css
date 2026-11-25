@@ -422,6 +422,15 @@ main {
     .card-name {
         font-size: 14px;
     }
+
+    #modal {
+        border-radius: 0;
+        padding: 15px;
+        width: 100vw;
+        height: 100dvh;
+        max-width: none;
+        max-height: none;
+    }
 }
 
 
@@ -537,7 +546,7 @@ main {
     position: relative;
 }
 
-.cropper-stage > img {
+.cropper-stage>img {
     display: block;
     max-width: 100%;
     max-height: 200px;
@@ -693,10 +702,33 @@ main {
     background-color: var(--accent);
 }
 
-.cropper-line.line-e { top: 0; right: -3px; width: 6px; cursor: ew-resize; }
-.cropper-line.line-w { top: 0; left: -3px; width: 6px; cursor: ew-resize; }
-.cropper-line.line-n { top: -3px; left: 0; height: 6px; cursor: ns-resize; }
-.cropper-line.line-s { bottom: -3px; left: 0; height: 6px; cursor: ns-resize; }
+.cropper-line.line-e {
+    top: 0;
+    right: -3px;
+    width: 6px;
+    cursor: ew-resize;
+}
+
+.cropper-line.line-w {
+    top: 0;
+    left: -3px;
+    width: 6px;
+    cursor: ew-resize;
+}
+
+.cropper-line.line-n {
+    top: -3px;
+    left: 0;
+    height: 6px;
+    cursor: ns-resize;
+}
+
+.cropper-line.line-s {
+    bottom: -3px;
+    left: 0;
+    height: 6px;
+    cursor: ns-resize;
+}
 
 .cropper-point {
     width: 8px;
@@ -706,14 +738,57 @@ main {
     opacity: 0.9;
 }
 
-.cropper-point.point-e { top: 50%; right: -4px; margin-top: -4px; cursor: ew-resize; }
-.cropper-point.point-w { top: 50%; left: -4px; margin-top: -4px; cursor: ew-resize; }
-.cropper-point.point-n { top: -4px; left: 50%; margin-left: -4px; cursor: ns-resize; }
-.cropper-point.point-s { bottom: -4px; left: 50%; margin-left: -4px; cursor: ns-resize; }
-.cropper-point.point-ne { top: -4px; right: -4px; cursor: nesw-resize; }
-.cropper-point.point-nw { top: -4px; left: -4px; cursor: nwse-resize; }
-.cropper-point.point-sw { bottom: -4px; left: -4px; cursor: nesw-resize; }
-.cropper-point.point-se { bottom: -4px; right: -4px; cursor: nwse-resize; }
+.cropper-point.point-e {
+    top: 50%;
+    right: -4px;
+    margin-top: -4px;
+    cursor: ew-resize;
+}
+
+.cropper-point.point-w {
+    top: 50%;
+    left: -4px;
+    margin-top: -4px;
+    cursor: ew-resize;
+}
+
+.cropper-point.point-n {
+    top: -4px;
+    left: 50%;
+    margin-left: -4px;
+    cursor: ns-resize;
+}
+
+.cropper-point.point-s {
+    bottom: -4px;
+    left: 50%;
+    margin-left: -4px;
+    cursor: ns-resize;
+}
+
+.cropper-point.point-ne {
+    top: -4px;
+    right: -4px;
+    cursor: nesw-resize;
+}
+
+.cropper-point.point-nw {
+    top: -4px;
+    left: -4px;
+    cursor: nwse-resize;
+}
+
+.cropper-point.point-sw {
+    bottom: -4px;
+    left: -4px;
+    cursor: nesw-resize;
+}
+
+.cropper-point.point-se {
+    bottom: -4px;
+    right: -4px;
+    cursor: nwse-resize;
+}
 
 .cropper-bg {
     background-image:
@@ -726,16 +801,29 @@ main {
     background-color: #f4f4f5;
 }
 
-.cropper-invisible { opacity: 0; }
+.cropper-invisible {
+    opacity: 0;
+}
+
 .cropper-hide {
     position: absolute;
     display: block;
     width: 0;
     height: 0;
 }
-.cropper-hidden { display: none !important; }
-.cropper-move { cursor: move; }
-.cropper-crop { cursor: crosshair; }
+
+.cropper-hidden {
+    display: none !important;
+}
+
+.cropper-move {
+    cursor: move;
+}
+
+.cropper-crop {
+    cursor: crosshair;
+}
+
 .cropper-disabled .cropper-drag-box,
 .cropper-disabled .cropper-face,
 .cropper-disabled .cropper-line,
