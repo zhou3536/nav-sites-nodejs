@@ -328,7 +328,6 @@ main {
 .modal-actions {
     display: flex;
     gap: 10px;
-    margin-top: 22px;
 }
 
 .btn {
@@ -466,22 +465,15 @@ main {
     padding: 0 6px;
 }
 
-/* ── Icon Upload & Cropper ── */
-.field-checkbox {
-    margin-bottom: 10px;
-}
-
-.checkbox-label {
-    display: inline-flex !important;
+.field .checkbox-label {
+    display: flex;
+    /* justify-content: end; */
+    padding: 0 1px;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     cursor: pointer;
     user-select: none;
-    text-transform: none !important;
-    letter-spacing: 0 !important;
-    font-size: 0.9rem !important;
-    color: var(--text) !important;
-    margin-bottom: 0 !important;
+    margin-left: auto;
 }
 
 .checkbox-label input[type="checkbox"] {
