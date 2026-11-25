@@ -555,8 +555,7 @@ main {
     width: 64px;
     height: 64px;
     overflow: hidden;
-    border-radius: 8px;
-    border: 1.5px solid var(--border);
+    outline: 1px solid var(--border);
     background: #fff;
 }
 
