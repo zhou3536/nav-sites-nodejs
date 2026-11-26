@@ -35,7 +35,11 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background: var(--bg);
     color: var(--text);
-    min-height: 100vh;
+    height: 100dvh;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 /* ── Header ── */
@@ -127,10 +131,13 @@ header {
 }
 
 /* ── Main ── */
-main {
+.container {
+    width: 100%;
     max-width: 1080px;
     margin: 0 auto;
     padding: 20px 20px 60px;
+    flex: 1;
+overflow-y: auto;
 }
 
 /* ── Grid ── */
@@ -150,7 +157,6 @@ main {
     cursor: pointer;
     transition: all 0.2s ease-in-out;
     box-shadow: 3px 6px 15px rgba(0, 0, 0, 0.1);
-    user-select: none;
     position: relative;
     min-height: 46px;
 }
@@ -370,7 +376,7 @@ main {
         padding: 40px 10px 30px;
     }
 
-    main {
+    .container {
         padding: 10px 10px 60px;
     }
 
@@ -457,7 +463,6 @@ main {
     align-items: center;
     gap: 5px;
     cursor: pointer;
-    user-select: none;
     margin-left: auto;
 }
 
@@ -553,7 +558,6 @@ main {
 .cropper-container {
     position: relative;
     overflow: hidden;
-    user-select: none;
     touch-action: none;
     direction: ltr;
     font-size: 0;

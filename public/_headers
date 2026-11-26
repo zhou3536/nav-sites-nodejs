@@ -1,6 +1,0 @@
-/*.css
-  Cache-Control: public, max-age=1200
-/*.js
-  Cache-Control: public, max-age=1200
-/*.ico
-  Cache-Control: public, max-age=86400
