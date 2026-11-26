@@ -12,12 +12,14 @@
 
   <header>
     <div class="search-wrap">
-      <div class="engine-pills">
+      <!-- <div class="engine-pills">
         <button class="pill active" data-engine="bing">Bing</button>
         <button class="pill" data-engine="google">Google</button>
         <button class="pill" data-engine="baidu">Baidu</button>
-      </div>
+      </div> -->
       <div class="search-box">
+        <div class="engine-pill" id="engine-pill"></div>
+        <div class="engine-pills" id="engine-pills"></div>
         <input id="search-input" type="text" placeholder="搜索…" autocomplete="off">
         <ul id="suggestion-list" class="suggestion-list"></ul>
         <button id="clean-btn">×</button>

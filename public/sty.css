@@ -68,7 +68,7 @@ header {
     flex: 1;
     border: none;
     outline: none;
-    padding: 11px 20px 10px;
+    padding: 11px 10px 10px;
     font-size: 1rem;
     color: var(--text);
     background: transparent;
@@ -88,46 +88,55 @@ header {
 }
 
 #search-btn {
-    background: #fff;
+    background-color: #e2f6ff;
     border: none;
     color: #111;
-    padding: 0 18px;
+    padding: 0 12px;
     cursor: pointer;
     font-size: 2rem;
     border-radius: 0 10px 10px 0;
     transition: background 0.15s;
 }
-
+.engine-pill:hover,
 #search-btn:hover {
-    background: #4f46e520;
+    background-color: #f1e7ff;
+}
+
+.engine-pill {
+    width: 40px;
+    border-radius: 10px 0 0 10px;
+    background-color: #e2f6ff;
+    cursor: pointer;
+    background-image: var(--bgc);
+    background-size: 24px 24px;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .engine-pills {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 105%;
+    display: none;
+    /* gap: 5px; */
+    background-color: #fff;
+    padding: 5px 0;
+    border-radius: 10px;
+}
+
+.engine-pills.active {
     display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 10px;
 }
 
-.pill {
-    padding: 5px 16px;
-    border-radius: 50px;
-    border: 1px solid #ffffff60;
-    background: rgba(0, 0, 0, 0.1);
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.82rem;
-    font-weight: 600;
+.engine-pills>div {
+    width: 40px;
+    height: 40px;
     cursor: pointer;
-    transition: all 0.3s;
-
-}
-
-
-.pill:hover,
-.pill.active {
-    color: #1a7ae7;
-    background: rgb(255, 255, 255);
-    border-color: transparent;
+    background-image: var(--bgc);
+    background-size: 24px 24px;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 /* ── Main ── */
@@ -137,7 +146,7 @@ header {
     margin: 0 auto;
     padding: 20px 20px 60px;
     flex: 1;
-overflow-y: auto;
+    overflow-y: auto;
 }
 
 /* ── Grid ── */
@@ -438,6 +447,7 @@ overflow-y: auto;
 
 .suggestion-list li {
     padding: 10px 15px;
+    padding-right: 3px;
     cursor: pointer;
     font-size: 14px;
     color: #333;

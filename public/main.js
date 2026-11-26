@@ -1,19 +1,14 @@
 let sh = JSON.parse(localStorage.getItem('sh_data') || '[]');
 // ── Config ──
-const ENGINES = {
-    bing: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
-    google: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
-    baidu: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`,
-};
-
-const COLORS = [
-    '#6366f1', '#0ea5e9', '#10b981', '#f59e0b',
-    '#ec4899', '#8b5cf6', '#14b8a6', '#f97316',
-];
+// const ENGINES = {
+//     bing: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
+//     google: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+//     baidu: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`,
+// };
 
 // ── State ──
 let bookmarks = [];
-let activeEngine = localStorage.getItem('engine') || 'bing';
+let activeEngineIndex = Number(localStorage.getItem('engine')) || 0;
 let ctxTarget = null;   // bookmark id of right-clicked card
 let editingId = null;   // null = add mode, string = edit mode
 let dragSrcId = null;
@@ -24,23 +19,43 @@ function saveCache() {
     localStorage.setItem(CACHE_KEY, JSON.stringify(bookmarks));
 }
 
-// ── Search ──
-document.querySelectorAll('.pill').forEach(btn => {
-    if (btn.dataset.engine === activeEngine) btn.classList.add('active');
-    else btn.classList.remove('active');
-
-    btn.addEventListener('click', () => {
-        activeEngine = btn.dataset.engine;
-        localStorage.setItem('engine', activeEngine);
-        document.querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+const ENGINES = [
+    { name: 'bing', url: 'https://www.bing.com/search?q=' },
+    { name: 'baidu', url: 'https://www.baidu.com/s?wd=' },
+    { name: 'google', url: 'https://www.google.com/search?q=' },
+];
+const enginePill = document.getElementById('engine-pill');
+const enginePills = document.getElementById('engine-pills');
+const Engine = ENGINES[activeEngineIndex];
+if (!Engine) activeEngineIndex = 0;
+enginePill.style.cssText = `--bgc:url('/img/${ENGINES[activeEngineIndex].name}.webp')`;
+enginePill.addEventListener('click', () => {
+    enginePills.classList.toggle('active');
+    hideSuggestions();
+});
+document.addEventListener('click', (e) => {
+    if (e.target === enginePill) return;
+    enginePills.classList.remove('active');
+});
+ENGINES.forEach((item, index) => {
+    const div = document.createElement('div');
+    div.style.cssText = `--bgc:url('/img/${item.name}.webp')`;
+    enginePills.append(div);
+    div.addEventListener('click', () => {
+        enginePill.style.cssText = `--bgc:url('/img/${item.name}.webp')`;
+        activeEngineIndex = index;
+        localStorage.setItem('engine', activeEngineIndex);
     });
 });
 
+
 function doSearch() {
     const q = document.getElementById('search-input').value.trim();
-    if (!q) return;
-    window.open(ENGINES[activeEngine](q), '_blank');
+    if (!q) {
+        showToast('请输入搜索内容');
+        return;
+    };
+    window.open(ENGINES[activeEngineIndex].url + q, '_blank');
     let index = sh.indexOf(q);
     if (index !== -1) sh.splice(index, 1);
     sh.push(q);
@@ -54,14 +69,14 @@ document.getElementById('search-input').addEventListener('keydown', e => {
 });
 
 // ── API ──
-async function apiFetch(path, opts = {}) {
-    window.addLoader(document.body);
+async function apiFetch(path, opts = {}, loader = true) {
+    if (loader) window.addLoader(document.body);
     opts.body = JSON.stringify(opts.body);
     const r = await fetch(path, {
         headers: { 'Content-Type': 'application/json' },
         ...opts,
     });
-    window.removeLoader(document.body);
+    if (loader) window.removeLoader(document.body);
     if (!r.ok) throw new Error(await r.text());
     return r.json();
 }
@@ -81,7 +96,7 @@ async function loadBookmarks() {
 
     try {
         const apiPath = '/bookmarks';
-        const netData = await apiFetch(apiPath);
+        const netData = await apiFetch(apiPath, '', false);
         const netDataStr = JSON.stringify(netData);
         if (netDataStr !== cachedData) {
             bookmarks = netData;
