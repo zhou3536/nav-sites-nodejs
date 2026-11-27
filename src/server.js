@@ -2,7 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import path from 'node:path';
 import config from './config.js';
-import { initStorage, ICO_DIR } from './services/storage.js';
+import { initStorage, ICO_DIR ,} from './services/storage.js';
 import { initializeAuth } from './auth.js';
 import bookmarksRouter from './routes/bookmarks.js';
 
@@ -11,29 +11,32 @@ const app = express();
 // 1. 基础中间件
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
-// app.use(cookieParser());
 
-// 2. 静态图标服务（对应原 Cloudflare R2 /ico/*）
+// 认证路由（放行 /login, /logout）
+initializeAuth(app);
+
+// 静态文件服务 
 app.use('/ico', express.static(ICO_DIR, {
   maxAge: '30d',
   etag: true,
 }));
 
-// 3. 认证路由（放行 /login, /logout）
-initializeAuth(app);
+app.use('/img', express.static(config.PUBLIC_IMG, {
+  maxAge: '30d',
+  etag: true,
+}));
 
-// 5. 业务 API 路由
-app.use(bookmarksRouter);
-
-// 6. 前端静态页面与资源托管
 app.use(express.static(config.PUBLIC_DIR, {
   maxAge: '10m',
   etag: true,
 }));
 
-// 7. 兜底路由
+// 业务 API 路由
+app.use(bookmarksRouter);
+
+// 兜底404路由
 app.get('*', (req, res) => {
-  res.sendFile(path.join(config.PUBLIC_DIR, 'index.html'));
+  res.status(404).send('404 Not Found');
 });
 
 // 初始化存储并启动服务

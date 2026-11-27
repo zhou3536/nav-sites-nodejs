@@ -40,11 +40,12 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    background: url('/img/bgi.jpg')no-repeat center / cover;
 }
 
 /* ── Header ── */
 header {
-    background: #667eea;
+    /* background: #667eea; */
     padding: 70px 24px 60px;
     text-align: center;
 }
@@ -57,7 +58,7 @@ header {
 
 .search-box {
     display: flex;
-    background: #fff;
+    background: #ffffffb0;
     border-radius: 10px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
     position: relative;
@@ -116,12 +117,11 @@ header {
 
 #engine-pill::before {
     content: '';
-    /* position: absolute; */
     display: block;
     width: 3px;
     height: 3px;
-    border-top: 1.5px solid ;
-    border-right: 1.5px solid ;
+    border-top: 1.5px solid;
+    border-right: 1.5px solid;
     border-color: #555;
     transform: rotate(135deg);
 }
@@ -183,39 +183,45 @@ header {
 #bookmarks-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 12px;
+    gap: 15px;
 }
 
 /* ── Card ── */
 .card {
-    background: var(--surface);
     border-radius: var(--radius);
-    border: 1.5px solid var(--border);
     padding: 0;
     overflow: hidden;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
-    box-shadow: 3px 6px 15px rgba(0, 0, 0, 0.1);
     position: relative;
     min-height: 46px;
 }
 
+.card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #ffffffd0;
+    filter: blur(4px);
+    z-index: -1;
+}
+
 @media (pointer: fine) {
     .card:hover {
-        border-color: #6da2ce;
+        background: #ffffffb0;
+        /* box-shadow: 3px 6px 15px rgba(0, 0, 0, 0.3); */
     }
 }
 
-.card2 {
+.card.add {
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
 }
 
-.card2::before,
-.card2::after {
-    content: '';
+
+.card.add .line {
     position: absolute;
     width: 18px;
     height: 3px;
@@ -223,7 +229,7 @@ header {
     border-radius: 10px;
 }
 
-.card2::after {
+.card.add .line.line2 {
     transform: rotate(90deg);
 }
 

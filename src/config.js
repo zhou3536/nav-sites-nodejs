@@ -11,8 +11,9 @@ const rootDir = path.resolve(__dirname, '..');
 const config = {
   PORT: parseInt(process.env.PORT || '3000', 10),
   HOST: process.env.HOST,
-  DATA_DIR: path.resolve(rootDir, process.env.DATA_DIR || './data'),
+  DATA_DIR: path.resolve(rootDir, 'data'),
   PUBLIC_DIR: path.resolve(rootDir, 'public'),
+  PUBLIC_IMG: path.resolve(rootDir, 'public', 'img'),
 };
 
 export default config;
