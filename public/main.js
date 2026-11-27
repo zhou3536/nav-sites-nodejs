@@ -1,11 +1,7 @@
 let sh = JSON.parse(localStorage.getItem('sh_data') || '[]');
-// ── Config ──
-// const ENGINES = {
-//     bing: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}`,
-//     google: q => `https://www.google.com/search?q=${encodeURIComponent(q)}`,
-//     baidu: q => `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`,
-// };
-
+const searchInput = document.getElementById('search-input');
+const sugList = document.getElementById('suggestion-list');
+const searchBtn = document.getElementById('search-btn')
 // ── State ──
 let bookmarks = [];
 let activeEngineIndex = Number(localStorage.getItem('engine')) || 0;
@@ -20,37 +16,37 @@ function saveCache() {
 }
 
 const ENGINES = [
-    { name: 'bing', url: 'https://www.bing.com/search?q=' },
-    { name: 'baidu', url: 'https://www.baidu.com/s?wd=' },
-    { name: 'google', url: 'https://www.google.com/search?q=' },
+    { name: '必应', image: 'bing', url: 'https://www.bing.com/search?q=' },
+    { name: '百度', image: 'baidu', url: 'https://www.baidu.com/s?wd=' },
+    { name: 'Google', image: 'google', url: 'https://www.google.com/search?q=' },
 ];
+
 const enginePill = document.getElementById('engine-pill');
 const enginePills = document.getElementById('engine-pills');
 const Engine = ENGINES[activeEngineIndex];
 if (!Engine) activeEngineIndex = 0;
-enginePill.style.cssText = `--bgc:url('/img/${ENGINES[activeEngineIndex].name}.webp')`;
+enginePill.style.cssText = `--bgc:url('/img/${ENGINES[activeEngineIndex].image}.png')`;
 enginePill.addEventListener('click', () => {
     enginePills.classList.toggle('active');
     hideSuggestions();
 });
-document.addEventListener('click', (e) => {
-    if (e.target === enginePill) return;
-    enginePills.classList.remove('active');
-});
+
 ENGINES.forEach((item, index) => {
     const div = document.createElement('div');
-    div.style.cssText = `--bgc:url('/img/${item.name}.webp')`;
+    div.textContent = item.name;
+    div.style.cssText = `--bgc:url('/img/${item.image}.png')`;
     enginePills.append(div);
     div.addEventListener('click', () => {
-        enginePill.style.cssText = `--bgc:url('/img/${item.name}.webp')`;
+        enginePill.style.cssText = `--bgc:url('/img/${item.image}.png')`;
         activeEngineIndex = index;
         localStorage.setItem('engine', activeEngineIndex);
+        enginePills.classList.remove('active');
     });
 });
 
 
 function doSearch() {
-    const q = document.getElementById('search-input').value.trim();
+    const q = searchInput.value.trim();
     if (!q) {
         showToast('请输入搜索内容');
         return;
@@ -63,8 +59,8 @@ function doSearch() {
     localStorage.setItem('sh_data', JSON.stringify(sh));
 }
 
-document.getElementById('search-btn').addEventListener('click', doSearch);
-document.getElementById('search-input').addEventListener('keydown', e => {
+searchBtn.addEventListener('click', doSearch);
+searchInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') doSearch();
 });
 
@@ -408,8 +404,7 @@ function showToast(msg) {
 }
 
 // ── Search Suggestions ──
-const searchInput = document.getElementById('search-input');
-const sugList = document.getElementById('suggestion-list');
+
 let currentSugIndex = -1;
 const cleanbtn = document.getElementById('clean-btn');
 function getSuggestions(query) {
@@ -463,12 +458,12 @@ function renderSuggestions(list, b) {
         }
         sugList.appendChild(li);
     });
-    sugList.style.display = 'block';
+    sugList.classList.add('active');
     currentSugIndex = -1;
 }
 
 function hideSuggestions() {
-    sugList.style.display = 'none';
+    sugList.classList.remove('active');
     sugList.innerHTML = '';
 }
 
@@ -486,6 +481,7 @@ searchInput.addEventListener('input', debounce((e) => {
     getSuggestions(e.target.value.trim());
 }, 300));
 searchInput.addEventListener('click', (e) => {
+    enginePills.classList.remove('active');
     let q = e.target.value.trim()
     if (q) {
         getSuggestions(q);
@@ -503,7 +499,7 @@ cleanbtn.addEventListener('click', (e) => {
 // 6. 键盘导航
 searchInput.addEventListener('keydown', (e) => {
     const items = sugList.querySelectorAll('li');
-    if (sugList.style.display === 'block' && items.length > 0) {
+    if (sugList.classList.contains('active') && items.length > 0) {
         if (e.key === 'ArrowDown') {
             e.preventDefault();
             currentSugIndex = (currentSugIndex + 1) % items.length;
@@ -528,10 +524,10 @@ function updateActiveStep(items) {
 }
 
 // 点击空白处关闭
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.search-box')) {
-        hideSuggestions();
-    }
+document.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.search-box')) return;
+    hideSuggestions();
+    enginePills.classList.remove('active');
 });
 
 loadBookmarks();
