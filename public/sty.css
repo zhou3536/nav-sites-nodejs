@@ -100,7 +100,7 @@ header {
 #search-btn {
     background-position: center;
     border-radius: 0 10px 10px 0;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8' /%3E%3Cline x1='18' y1='18' x2='21' y2='21' /%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7' /%3E%3Cline x1='17' y1='17' x2='21' y2='21' /%3E%3C/svg%3E");
 }
 
 #engine-pill {
@@ -479,7 +479,7 @@ header {
     border-top: none;
     border-radius: 8px;
     list-style: none;
-    padding: 0;
+    padding: 8px 4px;
     margin: 0;
     display: block;
     z-index: 19;
@@ -492,10 +492,11 @@ header {
 }
 
 .suggestion-list li {
-    padding: 10px 15px;
+    padding: 5px 8px;
+    border-radius: 8px;
     padding-right: 3px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 15px;
     color: #333;
     text-align: left;
     transition: all 0.2s ease-in-out;
